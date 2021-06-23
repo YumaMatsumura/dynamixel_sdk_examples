@@ -25,7 +25,6 @@ find_package(catkin REQUIRED
 add_message_files(
   FILES
     SetPosition.msg
-    #Set4Position.msg
     SyncSetPosition.msg
     BulkSetItem.msg
 )
@@ -68,9 +67,9 @@ add_executable(read_write_node src/read_write_node.cpp)
 add_dependencies(read_write_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(read_write_node ${catkin_LIBRARIES})
 
-## add_executable(read_write_node2 src/read_write_node2.cpp)
-## add_dependencies(read_write_node2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-## target_link_libraries(read_write_node2 ${catkin_LIBRARIES})
+add_executable(dynamixel_node src/dynamixel_node.cpp)
+add_dependencies(dynamixel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(dynamixel_node ${catkin_LIBRARIES})
 
 add_executable(sync_read_write_node src/sync_read_write_node.cpp)
 add_dependencies(sync_read_write_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
