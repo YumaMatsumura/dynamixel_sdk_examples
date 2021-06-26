@@ -17,6 +17,7 @@ using namespace dynamixel;
 // Control table address
 #define ADDR_TORQUE_ENABLE    24
 #define ADDR_GOAL_POSITION    30
+#define ADDR_MOVING_SPEED     32
 #define ADDR_PRESENT_POSITION 36
 
 // Protocol version
@@ -56,8 +57,8 @@ bool getPresentPositionCallback(
 void setJointPositionCallback(const std_msgs::Int16MultiArray& msg)
 {
   uint8_t dxl_error = 0;
-  int dxl_comm_result[4];
-  uint16_t position[4];
+  int dxl_comm_result[6];
+  uint16_t position[6];
   
   int num = msg.data.size();
   
@@ -71,8 +72,30 @@ void setJointPositionCallback(const std_msgs::Int16MultiArray& msg)
     }
   }
 
-  if (dxl_comm_result[0] == COMM_SUCCESS && dxl_comm_result[1] == COMM_SUCCESS && dxl_comm_result[2] == COMM_SUCCESS && dxl_comm_result[3] == COMM_SUCCESS) {
-    ROS_INFO("setJointPosition : {%d, %d, %d, %d}", position[0], position[1], position[2], position[3]);
+  if (dxl_comm_result[0] == COMM_SUCCESS && dxl_comm_result[1] == COMM_SUCCESS && dxl_comm_result[2] == COMM_SUCCESS && dxl_comm_result[3] == COMM_SUCCESS, dxl_comm_result[4] == COMM_SUCCESS && dxl_comm_result[5] == COMM_SUCCESS) {
+    ROS_INFO("setJointPosition : {%d, %d, %d, %d, %d, %d}", position[0], position[1], position[2], position[3], position[4], position[5]);
+  }
+}
+
+void setJointSpeedCallback(const std_msgs::Int16MultiArray& msg)
+{
+  uint8_t dxl_error = 0;
+  int dxl_comm_result[6];
+  uint16_t speed[6];
+  
+  int num = msg.data.size();
+  
+  for(int i = 0; i < num; i++){
+    dxl_comm_result[i] = COMM_TX_FAIL;
+    speed[i] = msg.data[i];
+    dxl_comm_result[i] = packetHandler->write2ByteTxRx(portHandler, i+1, ADDR_MOVING_SPEED, speed[i], &dxl_error);
+    if(dxl_comm_result[i] != COMM_SUCCESS){
+      ROS_ERROR("Failed to set speed! Result: [ID:%d]", i+1);
+    }
+  }
+  
+  if (dxl_comm_result[0] == COMM_SUCCESS && dxl_comm_result[1] == COMM_SUCCESS && dxl_comm_result[2] == COMM_SUCCESS && dxl_comm_result[3] == COMM_SUCCESS, dxl_comm_result[4] == COMM_SUCCESS && dxl_comm_result[5] == COMM_SUCCESS) {
+    ROS_INFO("setJointSpeed : {%d, %d, %d, %d, %d, %d}", speed[0], speed[1], speed[2], speed[3], speed[4], speed[5]);
   }
 }
 
@@ -93,7 +116,7 @@ int main(int argc, char ** argv)
     return -1;
   }
   
-  for(int i = 1; i < 5; i++){
+  for(int i = 1; i < 7; i++){
     int dxl_comm_result = COMM_TX_FAIL;
     dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, i, ADDR_TORQUE_ENABLE, 1, &dxl_error);
     if (dxl_comm_result != COMM_SUCCESS) {
@@ -106,6 +129,7 @@ int main(int argc, char ** argv)
   ros::NodeHandle nh;
   ros::ServiceServer get_position_srv = nh.advertiseService("/get_position", getPresentPositionCallback);
   ros::Subscriber set_joint_position_sub = nh.subscribe("/set_joint_position", 10, setJointPositionCallback);
+  ros::Subscriber set_joint_speed_sub = nh.subscribe("/set_joint_speed", 10, setJointSpeedCallback);
   ros::spin();
 
   portHandler->closePort();
